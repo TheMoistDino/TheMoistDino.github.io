@@ -247,12 +247,27 @@ const ProjectModal = ({ project, onClose }) => {
               </div>
             )}
 
-            {/* Resources / Assets Area - Only show if items exist */}
-            {(project.hasReport || (project.galleryImages && project.galleryImages.length > 0)) && (
+            {/* Resources / Assets Area */}
+            {(project.hasReport || (project.galleryImages && project.galleryImages.length > 0) || (project.codeLinks && project.codeLinks.length > 0)) && (
               <div className="space-y-4">
                 <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider">Project Documentation</h4>
                 
                 <div className="grid gap-3">
+                  
+                  {/* --- NEW CODE LINKS --- */}
+                  {project.codeLinks && project.codeLinks.map((link, idx) => (
+                    <a key={idx} href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 bg-slate-800/50 rounded-xl border border-slate-700 hover:border-blue-500 hover:bg-slate-800 transition-all group">
+                      <div className="p-2 bg-blue-900/30 text-blue-400 rounded-lg group-hover:text-white transition-colors">
+                        <Github size={20} />
+                      </div>
+                      <div>
+                        <div className="font-semibold text-slate-200">{link.label}</div>
+                        <div className="text-xs text-slate-500">Source Code</div>
+                      </div>
+                      <ExternalLink size={16} className="ml-auto text-slate-500 group-hover:text-blue-400" />
+                    </a>
+                  ))}
+
                   {project.hasReport && (
                     <a href={project.reportLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 bg-slate-800/50 rounded-xl border border-slate-700 hover:border-blue-500 hover:bg-slate-800 transition-all group">
                       <div className="p-2 bg-blue-900/30 text-blue-400 rounded-lg group-hover:text-white transition-colors">
@@ -344,8 +359,8 @@ const Portfolio = () => {
       title: "Quantum Casino",
       date: "Oct 2025",
       shortDesc: "A Qiskit Fall Fest Hackathon project utilizing quantum randomness.",
-      fullDescription: "Co-developed a 'Quantum Casino' application that leverages true quantum randomness rather than pseudo-random number generators. We implemented quantum circuits in Qiskit, applying Hadamard gates to qubits to create superposition, then measuring the collapse to determine game outcomes. This project demonstrates the practical application of quantum principles in software.",
-      tags: ["Python", "Qiskit", "Quantum Computing", "Hackathon"],
+      fullDescription: "Co-developed a 'Quantum Casino' application that leverages true quantum randomness rather than pseudo-random number generators. We implemented quantum circuits in Qiskit, applying Hadamard gates to qubits to create superposition, then measuring the collapse to determine game outcomes. The project was executed on IBM Quantum hardware (IBM_torino) and validated using the Qiskit Aer Simulator.",
+      tags: ["Python", "Qiskit", "Quantum Computing", "Hackathon", "IBM Quantum"],
       icon: Cpu,
       hasReport: false, 
       galleryImages: [], 
@@ -361,10 +376,17 @@ const Portfolio = () => {
       fullDescription: "As Club President and Lead Programmer for Teams 6373 & 6374, I engineered 100% of the robot's codebase in Java using Android Studio. I developed complex autonomous algorithms using computer vision and PID control loops to ensure precise movement. Additionally, I directed the complete robot build cycle, from CAD modeling in Onshape to 3D printing custom components and soldering electronics. My leadership resulted in 400% club growth and recognition as a Finalist Alliance (2023).",
       tags: ["Java", "Android Studio", "Onshape CAD", "PID Control", "Robotics"],
       icon: Bot, 
-      hasReport: false, 
+      hasReport: false,
+      codeLinks: [
+        { label: "2025 Robot Code (ILT)", url: "https://github.com/TheMoistDino/FtcRobotController/tree/ILT" },
+        { label: "2025 Off-Season Code", url: "https://github.com/TheMoistDino/high-stakes" }
+      ],
       galleryImages: [
-        { type: 'image', src: "ftc-robot-cad.png", label: "Robot CAD Model" },
-        { type: 'image', src: "ftc-robot-photo.jpg", label: "Competition Robot" }
+        { type: 'image', src: "robot2025.png", label: "2025 Robot CAD Model" },
+        { type: 'image', src: "robot2024.jpg", label: "2024 Competition Robot" },
+        { type: 'image', src: "robot2023.jpg", label: "2023 Early Competition Robot" },
+        // Example of how to add a small video to the gallery:
+        { type: 'video', src: "ftc-short-clip.mp4", label: "Autonomous Test" }
       ],
       video: null,
       youtubeId: null, 
@@ -380,7 +402,7 @@ const Portfolio = () => {
       icon: FileText,
       hasReport: true, 
       galleryImages: [
-        { type: 'image', src: "seaperch-cad.png", label: "ROV Design" }
+        { type: 'image', src: "seaperch.jpg", label: "Submerged ROV" }
       ],
       video: null,
       youtubeId: "XRPzDltYngE", 
@@ -396,8 +418,7 @@ const Portfolio = () => {
       icon: Wrench,
       hasReport: false, 
       galleryImages: [
-        { type: 'image', src: "mesa-car-prototype.jpg", label: "Prototype" },
-        { type: 'image', src: "mesa-competition.jpg", label: "Competition Day" }
+        { type: 'video', src: "mesa_machine.mp4", label: "Testing" }
       ],
       video: null,
       youtubeId: "bjFtC3qG3AQ", 
@@ -649,10 +670,11 @@ const Portfolio = () => {
                       <div>
                         <span className="text-purple-400">➜</span> <span className="text-blue-400">~</span> <span className="text-slate-200">active_project</span>
                         <div className="text-slate-400 mt-1 pl-4">
-                          <span className="text-yellow-300">IEEE Donkey Racers</span> @ UCLA
+                          <a href="https://github.com/libozaza/donkeyracers" target="_blank" rel="noopener noreferrer" className="text-yellow-300 hover:underline">IEEE Donkey Racers</a> @ UCLA
                         </div>
-                        <div className="text-slate-500 mt-1 pl-4 italic">
+                        <div className="text-slate-500 mt-1 pl-4 italic flex items-center gap-2">
                           Building an autonomous driving car using Python & Git.
+                          <span className="text-yellow-500 text-[10px] border border-yellow-500/30 bg-yellow-500/10 px-1.5 py-0.5 rounded">Early Stages</span>
                         </div>
                       </div>
                       <div className="animate-pulse">
