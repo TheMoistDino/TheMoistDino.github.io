@@ -243,12 +243,11 @@ const ProjectModal = ({ project, onClose }) => {
                                 title={media.label}
                               />
                             ) : (
-                              // In real usage, replace the placeholder logic below with:
-                              // <img src={media.src} alt={media.label} className="w-full h-full object-cover" />
-                              <span className="text-xs text-center px-2 z-10">
-                                {media.label}<br/>
-                                <span className="text-[10px] opacity-50">({media.src})</span>
-                              </span>
+                              <img 
+                                src={media.src} 
+                                alt={media.label} 
+                                className="w-full h-full object-cover" 
+                              />
                             )}
                           </div>
                         ))}
