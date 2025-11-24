@@ -25,7 +25,12 @@ import {
   TrendingUp,
   Zap,
   Maximize2,
-  FolderOpen
+  FolderOpen,
+  CheckCircle,
+  ArrowRight,
+  Copy,
+  Check,
+  ArrowUp
 } from 'lucide-react';
 
 // --- COMPONENTS ---
@@ -148,9 +153,71 @@ const FadeInSection = ({ children }) => {
   );
 };
 
-// 3. Project Modal Component with Lightbox
+// 3. Scroll Progress Bar Component (New)
+const ScrollProgress = () => {
+  const [scrollWidth, setScrollWidth] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const totalScroll = document.documentElement.scrollTop;
+      const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const scroll = `${totalScroll / windowHeight}`;
+      setScrollWidth(Number(scroll));
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  return (
+    <div className="fixed top-0 left-0 w-full h-1 z-[60]">
+      <div 
+        className="h-full bg-blue-500 transition-all duration-150 ease-out"
+        style={{ width: `${scrollWidth * 100}%` }}
+      />
+    </div>
+  );
+};
+
+// 4. Typewriter Effect Component (New)
+const Typewriter = ({ text, speed = 50, className }) => {
+  const [displayText, setDisplayText] = useState('');
+  
+  useEffect(() => {
+    let i = 0;
+    const timer = setInterval(() => {
+      if (i < text.length) {
+        setDisplayText((prev) => prev + text.charAt(i));
+        i++;
+      } else {
+        clearInterval(timer);
+      }
+    }, speed);
+    
+    return () => clearInterval(timer);
+  }, [text, speed]);
+
+  return <span className={className}>{displayText}</span>;
+};
+
+// 5. Project Modal Component with Lightbox
 const ProjectModal = ({ project, onClose }) => {
   const [lightboxMedia, setLightboxMedia] = useState(null);
+
+  // Close modal on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        if (lightboxMedia) {
+          setLightboxMedia(null);
+        } else {
+          onClose();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose, lightboxMedia]);
 
   if (!project) return null;
 
@@ -351,12 +418,16 @@ const Portfolio = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('home');
   const [selectedProject, setSelectedProject] = useState(null);
+  const [activeCategory, setActiveCategory] = useState('All');
+  const [showBackToTop, setShowBackToTop] = useState(false);
+  const [emailCopied, setEmailCopied] = useState(false);
 
   // PROJECT DATA 
   const projects = [
     {
       id: 1,
       title: "Quantum Casino",
+      category: "Software",
       date: "Oct 2025",
       shortDesc: "A Qiskit Fall Fest Hackathon project utilizing quantum randomness.",
       fullDescription: "Co-developed a 'Quantum Casino' application that leverages true quantum randomness rather than pseudo-random number generators. We implemented quantum circuits in Qiskit, applying Hadamard gates to qubits to create superposition, then measuring the collapse to determine game outcomes. The project was executed on IBM Quantum hardware (IBM_torino) and validated using the Qiskit Aer Simulator.",
@@ -371,6 +442,7 @@ const Portfolio = () => {
     {
       id: 2,
       title: "FIRST Tech Challenge (FTC)",
+      category: "Robotics",
       date: "Aug 2022 - May 2025",
       shortDesc: "Lead Programmer & Club President. Engineered autonomous robot control systems.",
       fullDescription: "As Club President and Lead Programmer for Teams 6373 & 6374, I engineered 100% of the robot's codebase in Java using Android Studio. I developed complex autonomous algorithms using computer vision and PID control loops to ensure precise movement. Additionally, I directed the complete robot build cycle, from CAD modeling in Onshape to 3D printing custom components and soldering electronics. My leadership resulted in 400% club growth and recognition as a Finalist Alliance (2023).",
@@ -395,6 +467,7 @@ const Portfolio = () => {
     {
       id: 3,
       title: "Seaperch: Underwater ROV",
+      category: "Robotics",
       date: "Mar 2025",
       shortDesc: "Authored a comprehensive Technical Design Report for an underwater robot.",
       fullDescription: "Authored and edited a comprehensive Technical Design Report for the Seaperch Underwater ROV competition. This involved translating the team's entire engineering design process into professional documentation, creating data visualizations in Google Sheets to justify design choices, and ensuring technical accuracy. Resulted in a 5th place finish in the Technical Design category.",
@@ -411,6 +484,7 @@ const Portfolio = () => {
     {
       id: 4,
       title: "MESA Machine: Wind-Powered Car",
+      category: "Engineering",
       date: "Sep 2023 - Apr 2024",
       shortDesc: "Engineered a Rube-Goldberg-style machine from recyclable materials.",
       fullDescription: "Served as Project Lead for a team engineering a complex Rube-Goldberg machine. The device was constructed exclusively from recyclable materials and featured a wind-powered vehicle mechanism. I managed the design iteration process and served as the lead troubleshooter during high-pressure competition environments, performing real-time repairs to ensure operation.",
@@ -426,6 +500,12 @@ const Portfolio = () => {
     }
   ];
 
+  const filteredProjects = activeCategory === 'All' 
+    ? projects 
+    : projects.filter(project => project.category === activeCategory);
+
+  const categories = ['All', 'Software', 'Robotics', 'Engineering'];
+
   // Helper functions to open specific projects from any section
   const openProject = (id) => {
     const project = projects.find(p => p.id === id);
@@ -439,16 +519,36 @@ const Portfolio = () => {
     }
   };
 
+  const copyEmail = (e) => {
+    e.preventDefault();
+    navigator.clipboard.writeText("darrenluu2025@gmail.com");
+    setEmailCopied(true);
+    setTimeout(() => setEmailCopied(false), 2000);
+  };
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   // Scroll logic
   useEffect(() => {
     const handleScroll = () => {
       const sections = ['home', 'about', 'experience', 'projects', 'education', 'skills', 'awards'];
       const scrollPosition = window.scrollY + 100;
+      
+      // Active section logic
       for (const section of sections) {
         const element = document.getElementById(section);
         if (element && element.offsetTop <= scrollPosition && (element.offsetTop + element.offsetHeight) > scrollPosition) {
           setActiveSection(section);
         }
+      }
+
+      // Back to top logic
+      if (window.scrollY > 500) {
+        setShowBackToTop(true);
+      } else {
+        setShowBackToTop(false);
       }
     };
     window.addEventListener('scroll', handleScroll);
@@ -488,10 +588,21 @@ const Portfolio = () => {
   return (
     <div className="bg-slate-950 min-h-screen text-slate-300 font-sans selection:bg-blue-500/30 selection:text-blue-200 relative">
       
-      {/* 1. Interactive Background */}
+      {/* 1. Scroll Progress Bar */}
+      <ScrollProgress />
+
+      {/* 2. Interactive Background */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <ParticleBackground />
       </div>
+
+      {/* Back To Top Button */}
+      <button 
+        onClick={scrollToTop}
+        className={`fixed bottom-8 right-8 p-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-500 transition-all duration-300 z-40 ${showBackToTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}
+      >
+        <ArrowUp size={20} />
+      </button>
 
       {/* Modal Overlay */}
       {selectedProject && (
@@ -499,7 +610,7 @@ const Portfolio = () => {
       )}
       
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 z-50 h-16">
+      <nav className="fixed top-0 left-0 right-0 bg-slate-950/70 backdrop-blur-lg border-b border-slate-800 z-50 h-16 transition-all">
         <div className="max-w-6xl mx-auto px-6 h-full flex justify-between items-center">
           <div className="text-xl font-bold text-slate-100 tracking-tight flex items-center gap-2">
             <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-slate-800 rounded flex items-center justify-center text-white font-bold">DL</div>
@@ -545,9 +656,8 @@ const Portfolio = () => {
               <div className="inline-block px-3 py-1 mb-6 text-xs font-medium tracking-wider text-blue-400 uppercase bg-blue-900/20 rounded-full border border-blue-900/50">
                 Computer Engineering Student
               </div>
-              <h1 className="text-5xl md:text-7xl font-bold text-slate-100 mb-6 tracking-tight">
-                Building the Future with <br/>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-slate-400">Code & Hardware</span>
+              <h1 className="text-5xl md:text-7xl font-bold text-slate-100 mb-6 tracking-tight min-h-[1.2em]">
+                <Typewriter text="Building the Future with Code & Hardware" speed={70} />
               </h1>
               <p className="text-lg md:text-xl text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
                 UCLA Computer Engineering Undergraduate. Valedictorian. <br className="hidden md:block"/>
@@ -831,14 +941,32 @@ const Portfolio = () => {
         <section id="projects" className="py-24 px-6 bg-slate-900/30">
           <FadeInSection>
             <div className="max-w-6xl mx-auto">
-              <div className="flex items-center gap-3 mb-8">
-                <div className="p-2 bg-blue-900/30 rounded-lg text-blue-400"><Code size={24} /></div>
-                <h2 className="text-3xl font-bold text-slate-100">Projects</h2>
-                <div className="h-px bg-slate-700 flex-grow ml-4 opacity-50"></div>
+              <div className="flex flex-col md:flex-row items-center justify-between mb-8 gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-900/30 rounded-lg text-blue-400"><Code size={24} /></div>
+                  <h2 className="text-3xl font-bold text-slate-100">Projects</h2>
+                </div>
+                {/* Category Filter */}
+                <div className="flex gap-2 p-1 bg-slate-900/50 rounded-lg border border-slate-800">
+                  {categories.map(cat => (
+                    <button
+                      key={cat}
+                      onClick={() => setActiveCategory(cat)}
+                      className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${
+                        activeCategory === cat 
+                          ? 'bg-blue-600 text-white shadow-md' 
+                          : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
               </div>
+              <div className="h-px bg-slate-700 w-full mb-8 opacity-50"></div>
               
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {projects.map((project) => (
+                {filteredProjects.map((project) => (
                   <div 
                     key={project.id}
                     onClick={() => setSelectedProject(project)}
@@ -948,41 +1076,63 @@ const Portfolio = () => {
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-slate-200 border-b border-slate-700 pb-2">Programming</h3>
                   <ul className="space-y-2">
-                    <li className="text-slate-400 flex items-center gap-2"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div> Java</li>
-                    <li className="text-slate-400 flex items-center gap-2"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div> Python</li>
-                    <li className="text-slate-400 flex items-center gap-2"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div> Qiskit</li>
+                    <li className="text-slate-400 flex items-center gap-2 group hover:text-blue-300 transition-colors cursor-help" title="Used in: FTC Robotics"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full group-hover:scale-150 transition-transform"></div> Java</li>
+                    <li className="text-slate-400 flex items-center gap-2 group hover:text-blue-300 transition-colors cursor-help" title="Used in: Quantum Casino, Donkey Racers"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full group-hover:scale-150 transition-transform"></div> Python</li>
+                    <li className="text-slate-400 flex items-center gap-2 group hover:text-blue-300 transition-colors cursor-help" title="Used in: Quantum Casino"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full group-hover:scale-150 transition-transform"></div> Qiskit</li>
                   </ul>
                 </div>
 
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-slate-200 border-b border-slate-700 pb-2">Software</h3>
                   <ul className="space-y-2">
-                    <li className="text-slate-400 flex items-center gap-2"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div> Onshape (CAD)</li>
-                    <li className="text-slate-400 flex items-center gap-2"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div> Google Workspace</li>
-                    <li className="text-slate-400 flex items-center gap-2"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div> Microsoft Office</li>
-                    <li className="text-slate-400 flex items-center gap-2"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div> Android Studio</li>
+                    <li className="text-slate-400 flex items-center gap-2 group hover:text-blue-300 transition-colors cursor-help" title="Used in: FTC Robotics"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full group-hover:scale-150 transition-transform"></div> Onshape (CAD)</li>
+                    <li className="text-slate-400 flex items-center gap-2 group hover:text-blue-300 transition-colors cursor-help" title="Used in: Seaperch ROV"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full group-hover:scale-150 transition-transform"></div> Google Workspace</li>
+                    <li className="text-slate-400 flex items-center gap-2 group hover:text-blue-300 transition-colors cursor-help" title="Used in: Seaperch ROV"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full group-hover:scale-150 transition-transform"></div> Microsoft Office</li>
+                    <li className="text-slate-400 flex items-center gap-2 group hover:text-blue-300 transition-colors cursor-help" title="Used in: FTC Robotics"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full group-hover:scale-150 transition-transform"></div> Android Studio</li>
                   </ul>
                 </div>
 
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-slate-200 border-b border-slate-700 pb-2">Fabrication</h3>
                   <ul className="space-y-2">
-                    <li className="text-slate-400 flex items-center gap-2"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div> 3D Printing</li>
-                    <li className="text-slate-400 flex items-center gap-2"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div> Soldering</li>
-                    <li className="text-slate-400 flex items-center gap-2"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div> Prototyping</li>
+                    <li className="text-slate-400 flex items-center gap-2 group hover:text-blue-300 transition-colors cursor-help" title="Used in: FTC Robotics, MESA"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full group-hover:scale-150 transition-transform"></div> 3D Printing</li>
+                    <li className="text-slate-400 flex items-center gap-2 group hover:text-blue-300 transition-colors cursor-help" title="Used in: FTC Robotics"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full group-hover:scale-150 transition-transform"></div> Soldering</li>
+                    <li className="text-slate-400 flex items-center gap-2 group hover:text-blue-300 transition-colors cursor-help" title="Used in: MESA Wind Car"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full group-hover:scale-150 transition-transform"></div> Prototyping</li>
                   </ul>
                 </div>
 
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-slate-200 border-b border-slate-700 pb-2">Languages</h3>
                   <ul className="space-y-2">
-                    <li className="text-slate-400 flex items-center gap-2"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div> English (Native)</li>
-                    <li className="text-slate-400 flex items-center gap-2"><div className="w-1.5 h-1.5 bg-slate-600 rounded-full"></div> Spanish</li>
-                    <li className="text-slate-400 flex items-center gap-2"><div className="w-1.5 h-1.5 bg-slate-600 rounded-full"></div> Cantonese</li>
+                    <li className="text-slate-400 flex items-center gap-2 group hover:text-blue-300 transition-colors"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full group-hover:scale-150 transition-transform"></div> English (Native)</li>
+                    <li className="text-slate-400 flex items-center gap-2 group hover:text-blue-300 transition-colors"><div className="w-1.5 h-1.5 bg-slate-600 rounded-full group-hover:scale-150 transition-transform"></div> Spanish</li>
+                    <li className="text-slate-400 flex items-center gap-2 group hover:text-blue-300 transition-colors"><div className="w-1.5 h-1.5 bg-slate-600 rounded-full group-hover:scale-150 transition-transform"></div> Cantonese</li>
                   </ul>
                 </div>
 
               </div>
+
+              {/* --- CERTIFICATIONS SECTION --- */}
+              <div className="mt-12 pt-8 border-t border-slate-800">
+                <h3 className="text-lg font-semibold text-slate-200 mb-6">Certifications</h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700 flex items-start gap-3 hover:border-green-500/50 transition-colors group hover:shadow-lg hover:shadow-green-500/10">
+                    <CheckCircle className="text-green-400 shrink-0 mt-1 group-hover:scale-110 transition-transform" size={20} />
+                    <div>
+                      <div className="font-semibold text-slate-200">Onshape Parametric Design</div>
+                      <div className="text-xs text-slate-500">CAD Certification</div>
+                    </div>
+                  </div>
+                  <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700 flex items-start gap-3 hover:border-green-500/50 transition-colors group hover:shadow-lg hover:shadow-green-500/10">
+                    <CheckCircle className="text-green-400 shrink-0 mt-1 group-hover:scale-110 transition-transform" size={20} />
+                    <div>
+                      <div className="font-semibold text-slate-200">Schoolhouse.world Certification</div>
+                      <div className="text-xs text-slate-500">SAT Math & English, AP Calculus, Physics</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </FadeInSection>
         </section>
@@ -998,40 +1148,40 @@ const Portfolio = () => {
               </div>
               <div className="grid md:grid-cols-2 gap-4">
                 
-                <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700/50 flex items-start gap-3 hover:bg-slate-800 transition-colors">
-                  <Award className="text-yellow-500 shrink-0 mt-1" size={20} />
+                <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700/50 flex items-start gap-3 hover:bg-slate-800 transition-colors group hover:border-yellow-500/50 hover:shadow-lg hover:shadow-yellow-500/10">
+                  <Award className="text-yellow-500 shrink-0 mt-1 group-hover:scale-110 transition-transform" size={20} />
                   <div>
                     <h3 className="text-slate-200 font-bold">Valedictorian</h3>
                     <p className="text-sm text-slate-500">Paloma Valley High School</p>
                   </div>
                 </div>
 
-                <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700/50 flex items-start gap-3 hover:bg-slate-800 transition-colors">
-                  <Award className="text-blue-400 shrink-0 mt-1" size={20} />
+                <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700/50 flex items-start gap-3 hover:bg-slate-800 transition-colors group hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/10">
+                  <Award className="text-blue-400 shrink-0 mt-1 group-hover:scale-110 transition-transform" size={20} />
                   <div>
                     <h3 className="text-slate-200 font-bold">AP Scholar with Distinction</h3>
                     <p className="text-sm text-slate-500">Academic Excellence</p>
                   </div>
                 </div>
 
-                <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700/50 flex items-start gap-3 hover:bg-slate-800 transition-colors">
-                  <Award className="text-blue-400 shrink-0 mt-1" size={20} />
+                <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700/50 flex items-start gap-3 hover:bg-slate-800 transition-colors group hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/10">
+                  <Award className="text-blue-400 shrink-0 mt-1 group-hover:scale-110 transition-transform" size={20} />
                   <div>
-                    <h3 className="text-slate-200 font-bold">California State Seal of Biliteracy</h3>
+                    <h3 className="text-slate-200 font-bold">California State Seal of Biliteracy (Spanish)</h3>
                     <p className="text-sm text-slate-500">Language Proficiency</p>
                   </div>
                 </div>
 
-                <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700/50 flex items-start gap-3 hover:bg-slate-800 transition-colors">
-                  <Award className="text-purple-400 shrink-0 mt-1" size={20} />
+                <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700/50 flex items-start gap-3 hover:bg-slate-800 transition-colors group hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10">
+                  <Award className="text-purple-400 shrink-0 mt-1 group-hover:scale-110 transition-transform" size={20} />
                   <div>
                     <h3 className="text-slate-200 font-bold">Riverside Cty Exceptional Graduate</h3>
                     <p className="text-sm text-slate-500">Honoree 2025</p>
                   </div>
                 </div>
 
-                <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700/50 flex items-start gap-3 hover:bg-slate-800 transition-colors md:col-span-2">
-                  <Award className="text-green-400 shrink-0 mt-1" size={20} />
+                <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700/50 flex items-start gap-3 hover:bg-slate-800 transition-colors md:col-span-2 group hover:border-green-500/50 hover:shadow-lg hover:shadow-green-500/10">
+                  <Award className="text-green-400 shrink-0 mt-1 group-hover:scale-110 transition-transform" size={20} />
                   <div>
                     <h3 className="text-slate-200 font-bold">Robotics & Engineering Awards</h3>
                     <ul className="text-sm text-slate-500 mt-1 grid md:grid-cols-2 gap-x-4">
@@ -1048,12 +1198,44 @@ const Portfolio = () => {
           </FadeInSection>
         </section>
 
+        {/* --- FINAL CTA SECTION --- */}
+        <section className="py-20 bg-slate-900 border-t border-slate-800 text-center px-6">
+          <FadeInSection>
+            <div className="max-w-2xl mx-auto space-y-6">
+              <h2 className="text-3xl md:text-4xl font-bold text-slate-100">Ready to Collaborate?</h2>
+              <p className="text-slate-400 text-lg">
+                I'm always open to discussing new projects, creative ideas, or opportunities to be part of your team.
+              </p>
+              <div className="flex flex-col md:flex-row gap-4 justify-center items-center">
+                <a 
+                  href="mailto:darrenluu2025@gmail.com" 
+                  className="inline-flex items-center gap-2 px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-full transition-all hover:-translate-y-1 shadow-lg shadow-blue-900/20"
+                >
+                  <Mail size={20} />
+                  Get In Touch
+                  <ArrowRight size={20} />
+                </a>
+                <button
+                  onClick={copyEmail}
+                  className="inline-flex items-center gap-2 px-6 py-4 bg-slate-800 hover:bg-slate-700 text-white font-medium rounded-full transition-all border border-slate-700 group"
+                >
+                  {emailCopied ? <Check size={20} className="text-green-400" /> : <Copy size={20} className="text-slate-400 group-hover:text-white" />}
+                  {emailCopied ? "Email Copied!" : "Copy Email"}
+                </button>
+              </div>
+            </div>
+          </FadeInSection>
+        </section>
+
       </main>
 
       {/* Footer */}
       <footer className="py-8 bg-slate-950 border-t border-slate-800 text-center text-slate-500 text-sm relative z-10">
         <div className="max-w-4xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p>© {new Date().getFullYear()} Darren Luu. All rights reserved.</p>
+          <div className="text-left">
+            <p>© {new Date().getFullYear()} Darren Luu. All rights reserved.</p>
+            <p className="text-xs text-slate-600 mt-1">Built with React & Tailwind CSS</p>
+          </div>
           <div className="flex gap-6">
             <a href="mailto:darrenluu2025@gmail.com" className="hover:text-blue-400 transition-colors">Email</a>
             <a href="https://github.com/TheMoistDino" target="_blank" rel="noreferrer" className="hover:text-blue-400 transition-colors">GitHub</a>
