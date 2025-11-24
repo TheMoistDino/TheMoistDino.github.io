@@ -125,11 +125,29 @@ const ParticleBackground = () => {
   return <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full -z-10 opacity-50 print:hidden" />;
 };
 
-// 2. Interactive Terminal Component (New)
+// 2. Interactive Terminal Component (Updated with Donkey Racers)
 const InteractiveTerminal = () => {
   const [input, setInput] = useState('');
+
+  // Define the Status Log content as a reusable variable
+  const statusLogContent = (
+    <div className="my-2 p-3 bg-slate-900/50 rounded border border-slate-800 border-l-2 border-l-yellow-500">
+       <div className="text-slate-400 text-xs uppercase tracking-wider mb-1">Status Log</div>
+       <div className="text-slate-300">
+         <span className="text-purple-400">➜</span> <span className="font-bold text-slate-200">Current Focus:</span> Computer Vision & Machine Learning
+       </div>
+       <div className="text-slate-300 mt-1">
+         <span className="text-purple-400">➜</span> <span className="font-bold text-slate-200">Active Project:</span> <a href="https://github.com/libozaza/donkeyracers" target="_blank" rel="noreferrer" className="text-yellow-400 hover:underline">IEEE Donkey Racers</a>
+         <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">Early Stages</span>
+       </div>
+    </div>
+  );
+
+  // Initialize history with the Active Project info so it's visible immediately
   const [history, setHistory] = useState([
     { type: 'output', text: 'Welcome to DarrenOS v1.0.0' },
+    { type: 'output', text: 'Loading current profile configuration...' },
+    { type: 'output', content: statusLogContent },
     { type: 'output', text: 'Type "help" for available commands.' }
   ]);
   const scrollRef = useRef(null);
@@ -140,9 +158,11 @@ const InteractiveTerminal = () => {
       const newHistory = [...history, { type: 'input', text: input }];
       
       let response = '';
+      let content = null;
+
       switch (cmd) {
         case 'help':
-          response = 'Available commands: about, skills, contact, clear';
+          response = 'Available commands: about, skills, contact, projects, current_project, clear';
           break;
         case 'about':
           response = 'I am a Computer Engineering student at UCLA focused on Robotics and Quantum Computing.';
@@ -153,6 +173,12 @@ const InteractiveTerminal = () => {
         case 'contact':
           response = 'Email: darrenluu2025@gmail.com | LinkedIn: /in/dwluu';
           break;
+        case 'projects':
+           response = 'Check out the Projects section below! Key projects: Quantum Casino, FTC Robotics, MESA Wind Car.';
+           break;
+        case 'current_project':
+           content = statusLogContent; // Re-display the status log
+           break;
         case 'clear':
           setHistory([]);
           setInput('');
@@ -161,7 +187,7 @@ const InteractiveTerminal = () => {
           response = `Command not found: ${cmd}. Type "help" for list.`;
       }
       
-      newHistory.push({ type: 'output', text: response });
+      newHistory.push({ type: 'output', text: response, content: content });
       setHistory(newHistory);
       setInput('');
     }
@@ -174,7 +200,7 @@ const InteractiveTerminal = () => {
   }, [history]);
 
   return (
-    <div className="bg-slate-950 rounded-xl border border-slate-700 shadow-xl overflow-hidden font-mono mb-6 flex flex-col h-64">
+    <div className="bg-slate-950 rounded-xl border border-slate-700 shadow-xl overflow-hidden font-mono mb-6 flex flex-col h-72">
       <div className="bg-slate-800 px-4 py-2 flex items-center gap-2 border-b border-slate-700 shrink-0">
         <Terminal size={14} className="text-green-400" />
         <span className="text-xs text-slate-400">interactive_terminal</span>
@@ -190,7 +216,8 @@ const InteractiveTerminal = () => {
       >
         {history.map((line, i) => (
           <div key={i} className={`${line.type === 'input' ? 'text-blue-400' : 'text-slate-300'}`}>
-            {line.type === 'input' ? '> ' : ''}{line.text}
+            {line.type === 'input' ? '> ' : ''}
+            {line.content ? line.content : line.text}
           </div>
         ))}
         <div className="flex items-center gap-2 text-purple-400">
@@ -292,7 +319,6 @@ const Typewriter = ({ text, speed = 50, className }) => {
 const ProjectModal = ({ project, onClose }) => {
   const [lightboxMedia, setLightboxMedia] = useState(null);
 
-  // Close modal on Escape key
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
@@ -343,12 +369,8 @@ const ProjectModal = ({ project, onClose }) => {
               <XCircle size={24} />
             </button>
           </div>
-
-          {/* Body (Scrollable) */}
           <div className="p-6 overflow-y-auto custom-scrollbar">
             <p className="text-slate-300 text-lg leading-relaxed mb-6">{project.fullDescription}</p>
-            
-            {/* Tech Stack */}
             <div className="mb-8">
               <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">Technologies</h4>
               <div className="flex flex-wrap gap-2">
@@ -357,8 +379,6 @@ const ProjectModal = ({ project, onClose }) => {
                 ))}
               </div>
             </div>
-
-            {/* --- VIDEO SECTION (YouTube or Local) --- */}
             {(project.youtubeId || project.video) && (
               <div className="mb-8">
                 <div className="flex items-center gap-3 mb-3">
@@ -374,8 +394,6 @@ const ProjectModal = ({ project, onClose }) => {
                 </div>
               </div>
             )}
-
-            {/* Resources / Assets Area */}
             {(project.hasReport || (project.galleryImages && project.galleryImages.length > 0) || (project.codeLinks && project.codeLinks.length > 0)) && (
               <div className="space-y-4">
                 <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider">Project Documentation</h4>
@@ -394,8 +412,6 @@ const ProjectModal = ({ project, onClose }) => {
                       <ExternalLink size={16} className="ml-auto text-slate-500 group-hover:text-blue-400" />
                     </a>
                   )}
-
-                  {/* Gallery Images/Videos (Dynamic) */}
                   {project.galleryImages && project.galleryImages.length > 0 && (
                     <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700">
                       <div className="flex items-center gap-3 mb-3">
@@ -428,8 +444,6 @@ const ProjectModal = ({ project, onClose }) => {
               </div>
             )}
           </div>
-
-          {/* Footer */}
           <div className="p-4 border-t border-slate-700 bg-slate-950/50 flex justify-end shrink-0">
             <button onClick={onClose} className="px-5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium transition-colors">Close</button>
           </div>
@@ -524,6 +538,24 @@ const Portfolio = () => {
       video: null,
       youtubeId: "bjFtC3qG3AQ", 
       reportLink: "#"
+    },
+    {
+      id: 5,
+      title: "IEEE Donkey Racers",
+      category: "Robotics",
+      date: "Ongoing",
+      shortDesc: "Building an autonomous driving car using Python & Git. (Early Stages)",
+      fullDescription: "Currently collaborating in a team for the IEEE Donkey Racers project at UCLA. We are building an autonomous RC car using computer vision and machine learning. The project focuses on utilizing Python for the software stack and Git for version control. We are in the early stages of development, working on assembling the hardware and setting up the initial software environment for autonomous lane following.",
+      tags: ["Python", "Git", "Computer Vision", "Machine Learning", "Autonomous Driving"],
+      icon: Bot,
+      hasReport: false,
+      codeLinks: [
+        { label: "Project Repository", url: "https://github.com/libozaza/donkeyracers" }
+      ],
+      galleryImages: [], 
+      video: null,
+      youtubeId: null,
+      reportLink: "#"
     }
   ];
 
@@ -533,7 +565,6 @@ const Portfolio = () => {
 
   const categories = ['All', 'Software', 'Robotics', 'Engineering'];
 
-  // Helper functions to open specific projects from any section
   const openProject = (id) => {
     const project = projects.find(p => p.id === id);
     if (project) setSelectedProject(project);
@@ -557,7 +588,6 @@ const Portfolio = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Scroll logic
   useEffect(() => {
     const handleScroll = () => {
       const sections = ['home', 'about', 'experience', 'projects', 'education', 'skills', 'awards'];
